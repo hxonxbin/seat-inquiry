@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>婚禮座位查詢表</title>
+    <title>婚禮座位查詢</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -14,6 +14,12 @@
             margin: 0;
             background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
         }
+
+        /* .app-container {
+            height: 100%;
+            width: 100%;
+            overflow-y: scroll;
+        } */
 
         .app {
             text-align: center;
@@ -42,16 +48,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .input-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
         }
 
         .seating-chart input {
             padding: 15px;
             font-size: 16px;
-            margin-bottom: 20px;
             border: 2px solid #ff9a9e;
             border-radius: 8px;
-            width: 100%;
-            max-width: 300px;
+            width: calc(100% - 40px); /* 調整輸入框寬度 */
             transition: border-color 0.3s;
         }
 
@@ -60,8 +74,29 @@
             outline: none;
         }
 
+        .clear-button {
+            position: absolute;
+            top: 50%;
+            right: 5px; /* 調整按鈕位置 */
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .clear-button svg {
+            width: 16px;
+            height: 16px;
+            fill: #ff9a9e;
+        }
+
+        .clear-button:hover svg {
+            fill: #ff7597;
+        }
+
         .seating-chart button {
-            padding: 15px 30px;
+            padding: 15px 20px; /* 调整按钮的宽度 */
             font-size: 18px;
             background-color: #ff9a9e;
             color: white;
@@ -69,17 +104,32 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin-top: 20px;
+            width: 100%; /* 让按钮充满父容器 */
         }
 
         .seating-chart button:hover {
             background-color: #ff7597;
         }
 
-        .seating-chart p {
-            margin-top: 20px;
+        .result-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-text {
             font-size: 18px;
             color: #333;
+            margin-top: 10px;
             white-space: pre-wrap;
+        }
+
+        .seat-info {
+            font-size: 20px;
+            color: #ff9a9e;
+            margin-top: 10px;
         }
 
         @media (max-width: 600px) {
@@ -116,18 +166,29 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
 
         const SeatingChart = () => {
             const [guestName, setGuestName] = useState('');
             const [seatInfo, setSeatInfo] = useState(null);
+            const [showResults, setShowResults] = useState(false);
+            const [seatingData, setSeatingData] = useState({});
 
-            const seatingData = {
-                'John Doe': 'A1',
-                'Jane Smith': 'B2',
-                'Alice Johnson': 'C3',
-                'Bob Brown': 'D4',
-            };
+            useEffect(() => {
+                fetch("./seatingData.json")
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw new Error
+                                (`HTTP error! Status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then((data) => {
+                        console.log(data);
+                        setSeatingData(data);
+                    })
+                    .catch((error) => console.error("Unable to fetch data:", error));
+            }, []);
 
             const handleInputChange = (event) => {
                 setGuestName(event.target.value);
@@ -139,38 +200,68 @@
                 );
 
                 if (results.length > 0) {
-                    setSeatInfo(results.map(name => `${name}: 座位 ${seatingData[name]}`).join('\n'));
+                    setShowResults(true);
+                    setSeatInfo(results.map(name => ({ name, seat: seatingData[name] })));
                 } else {
-                    setSeatInfo('查無此人');
+                    setShowResults(true);
+                    setSeatInfo([{ name: '查無此人', seat: '' }]);
                 }
+            };
+
+            const clearInput = () => {
+                setShowResults(false);
+                setGuestName('');
+                setSeatInfo(null);
             };
 
             return (
                 <div className="seating-chart">
-                    <input
-                        type="text"
-                        placeholder="輸入客人姓名"
-                        value={guestName}
-                        onChange={handleInputChange}
-                    />
-                    <button onClick={handleSearch}>查詢座位</button>
-                    {seatInfo && <p>{seatInfo.split('\n').map((line, index) => <div key={index}>{line}</div>)}</p>}
-                </div>
-            );
-        };
+                    {!showResults && (
+                        <div className="input-container">
+                           
+                            <input
+                            type="text"
+                            placeholder="請輸入姓名"
+                            value={guestName}
+                            onChange={handleInputChange}
+                        />
+                        {guestName && (
+                            <button className="clear-button" onClick={clearInput}>
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M18.3 5.71a1 1 0 00-1.42 0L12 10.59 7.12 5.7a1 1 0 00-1.41 1.41L10.59 12l-4.88 4.88a1 1 0 001.41 1.41L12 13.41l4.88 4.88a1 1 0 001.41-1.41L13.41 12l4.88-4.88a1 1 0 000-1.41z"/>
+                                </svg>
+                            </button>
+                        )}
+                        </div>
+                        )}
+                        {!showResults && <button onClick={handleSearch}>查詢座位</button>}
+                        {showResults && (
+                        <div className="result-container">
+                            {seatInfo.map((info, index) => (
+                                <div key={index}>
+                                    <p className="result-text">{info.name}</p>
+                                    <p className="seat-info">{info.seat}</p>
+                                </div>
+                            ))}
+                            <button onClick={clearInput} style={{ marginTop: '20px', width: '100%' }}>重新查詢</button>
+                        </div>
+                        )}
+                        </div>
+                        );
+                        };
 
-        const App = () => {
-            return (
-                <div className="app">
-                    <header className="app-header">
-                        <h1>婚禮座位查詢表</h1>
-                    </header>
-                    <SeatingChart />
-                </div>
-            );
-        };
+                        const App = () => {
+                            return (
+                                <div className="app">
+                                    <header className="app-header">
+                                        <h1>婚禮座位查詢</h1>
+                                    </header>
+                                    <SeatingChart />
+                                </div>
+                            );
+                        };
 
-        ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
-</body>
-</html>
+                        ReactDOM.render(<App />, document.getElementById('root'));
+                        </script>
+                        </body>
+                        </html>
