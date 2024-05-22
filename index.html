@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚禮座位查詢表</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+        }
+
+        .app {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .app-header {
+            background-color: #ff9a9e;
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            margin: -40px -40px 20px -40px;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .seating-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .seating-chart input {
+            padding: 15px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border: 2px solid #ff9a9e;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 300px;
+            transition: border-color 0.3s;
+        }
+
+        .seating-chart input:focus {
+            border-color: #ff7597;
+            outline: none;
+        }
+
+        .seating-chart button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #ff9a9e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .seating-chart button:hover {
+            background-color: #ff7597;
+        }
+
+        .seating-chart p {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const SeatingChart = () => {
+            const [guestName, setGuestName] = useState('');
+            const [seatInfo, setSeatInfo] = useState(null);
+
+            const seatingData = {
+                'John Doe': 'A1',
+                'Jane Smith': 'B2',
+                'Alice Johnson': 'C3',
+                'Bob Brown': 'D4',
+            };
+
+            const handleInputChange = (event) => {
+                setGuestName(event.target.value);
+            };
+
+            const handleSearch = () => {
+                const results = Object.keys(seatingData).filter(name =>
+                    name.toLowerCase().includes(guestName.toLowerCase())
+                );
+
+                if (results.length > 0) {
+                    setSeatInfo(results.map(name => `${name}: 座位 ${seatingData[name]}`).join('\n'));
+                } else {
+                    setSeatInfo('查無此人');
+                }
+            };
+
+            return (
+                <div className="seating-chart">
+                    <input
+                        type="text"
+                        placeholder="輸入客人姓名"
+                        value={guestName}
+                        onChange={handleInputChange}
+                    />
+                    <button onClick={handleSearch}>查詢座位</button>
+                    {seatInfo && <p>{seatInfo.split('\n').map((line, index) => <div key={index}>{line}</div>)}</p>}
+                </div>
+            );
+        };
+
+        const App = () => {
+            return (
+                <div className="app">
+                    <header className="app-header">
+                        <h1>婚禮座位查詢表</h1>
+                    </header>
+                    <SeatingChart />
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
